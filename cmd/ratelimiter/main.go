@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -14,20 +15,29 @@ import (
 )
 
 func main() {
+	config, err := LoadConfig("/etc/antibruteforce/config.toml")
+	if err != nil {
+		log.Fatal("failed loading config: %w", err)
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-	redis := redis.NewRedis()
+	redis := redis.NewRedis(config.Redis.Host, config.Redis.Port, config.Redis.Password, config.Redis.DB)
 	if err := redis.Start(ctx); err != nil {
 		logger.Error("Failed to start redis", "err", err)
 		os.Exit(1)
 	}
 
-	limiter := ratelimiter.NewRateLimiter(logger, redis)
+	limiter := ratelimiter.NewRateLimiter(logger, redis, ratelimiter.Rates{
+		Login:    config.Rates.Login,
+		Password: config.Rates.Password,
+		IP:       config.Rates.IP,
+	})
 
-	server := grpcserver.NewGRPC(logger, limiter)
+	server := grpcserver.NewGRPC(logger, limiter, config.GRPC.Port)
 
 	go func() {
 		if err := server.Start(); err != nil {

@@ -21,19 +21,21 @@ type Server struct {
 	logger  *slog.Logger
 	server  *grpc.Server
 	limiter *ratelimiter.Limiter
+	port    string
 }
 
-func NewGRPC(logger *slog.Logger, limiter *ratelimiter.Limiter) *Server {
+func NewGRPC(logger *slog.Logger, limiter *ratelimiter.Limiter, port string) *Server {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(LoggingInterceptor(logger)))
 	return &Server{
 		logger:  logger,
 		server:  grpcServer,
 		limiter: limiter,
+		port:    port,
 	}
 }
 
 func (s *Server) Start() error {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", 5000))
+	l, err := net.Listen("tcp", fmt.Sprintf(":%s", s.port))
 	if err != nil {
 		return fmt.Errorf("failed start tcp server: %w", err)
 	}

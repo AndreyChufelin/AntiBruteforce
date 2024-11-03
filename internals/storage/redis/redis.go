@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
@@ -11,18 +12,25 @@ import (
 )
 
 type Storage struct {
-	client *redis.Client
+	client   *redis.Client
+	addr     string
+	password string
+	db       int
 }
 
-func NewRedis() *Storage {
-	return &Storage{}
+func NewRedis(host, port, password string, db int) *Storage {
+	return &Storage{
+		addr:     net.JoinHostPort(host, port),
+		password: password,
+		db:       db,
+	}
 }
 
 func (s *Storage) Start(ctx context.Context) error {
 	s.client = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
+		Addr:     s.addr,
+		Password: s.password,
+		DB:       s.db,
 	})
 
 	if err := s.client.Ping(ctx).Err(); err != nil {

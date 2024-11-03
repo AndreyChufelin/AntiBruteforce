@@ -17,7 +17,7 @@ func SetupLimiter(tb testing.TB, storage Storage) *Limiter {
 	tb.Helper()
 	b := &bytes.Buffer{}
 	logger := slog.New(slog.NewJSONHandler(b, nil))
-	return NewRateLimiter(logger, storage)
+	return NewRateLimiter(logger, storage, Rates{Login: 10, Password: 100, IP: 1000})
 }
 
 func TestReqAllowed(t *testing.T) {
