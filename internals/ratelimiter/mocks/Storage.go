@@ -17,6 +17,24 @@ type Storage struct {
 	mock.Mock
 }
 
+// ClearBucket provides a mock function with given fields: ctx, bucketType, key
+func (_m *Storage) ClearBucket(ctx context.Context, bucketType storage.BucketType, key string) error {
+	ret := _m.Called(ctx, bucketType, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearBucket")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, storage.BucketType, string) error); ok {
+		r0 = rf(ctx, bucketType, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateBucket provides a mock function with given fields: ctx, bucketType, key, limit, period
 func (_m *Storage) UpdateBucket(ctx context.Context, bucketType storage.BucketType, key string, limit int, period time.Duration) error {
 	ret := _m.Called(ctx, bucketType, key, limit, period)

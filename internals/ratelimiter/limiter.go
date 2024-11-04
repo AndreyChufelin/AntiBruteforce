@@ -25,6 +25,7 @@ type Rates struct {
 //go:generate mockery --name Storage
 type Storage interface {
 	UpdateBucket(ctx context.Context, bucketType storage.BucketType, key string, limit int, period time.Duration) error
+	ClearBucket(ctx context.Context, bucketType storage.BucketType, key string) error
 }
 
 func NewRateLimiter(logger *slog.Logger, storage Storage, rates Rates) *Limiter {
@@ -68,4 +69,24 @@ func (r *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 	}
 
 	return true, nil
+}
+
+func (r *Limiter) ClearReq(ctx context.Context, login, ip string) error {
+	logg := r.logger.With("op", "ClearReq")
+	if login != "" {
+		err := r.storage.ClearBucket(ctx, storage.LoginBucket, login)
+		if err != nil {
+			logg.Error("failed to clear bucket", "login", login, "err", err)
+			return fmt.Errorf("failed to clear bucket: %w", err)
+		}
+	}
+	if ip != "" {
+		err := r.storage.ClearBucket(ctx, storage.IPBucket, ip)
+		if err != nil {
+			logg.Error("failed to clear bucket", "ip", ip, "err", err)
+			return fmt.Errorf("failed to clear bucket: %w", err)
+		}
+	}
+
+	return nil
 }

@@ -10,4 +10,7 @@ const (
 	IPBucket       BucketType = "ip"
 )
 
-var ErrBucketFull = errors.New("bucket is full")
+var (
+	ErrBucketFull     = errors.New("bucket is full")
+	ErrBucketNotExist = errors.New("bucket doesn't exist")
+)

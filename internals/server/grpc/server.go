@@ -2,12 +2,14 @@ package grpcserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"time"
 
 	"github.com/AndreyChufelin/AntiBruteforce/internals/ratelimiter"
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	pbratelimter "github.com/AndreyChufelin/AntiBruteforce/pb/ratelimiter"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -77,6 +79,18 @@ func (s *Server) Allow(ctx context.Context, request *pbratelimter.AllowRequest) 
 	}
 
 	return &pbratelimter.AllowResponse{Ok: ok}, nil
+}
+
+func (s *Server) Clear(ctx context.Context, request *pbratelimter.ClearRequest) (*pbratelimter.Empty, error) {
+	err := s.limiter.ClearReq(ctx, request.Login, request.Ip)
+	if err != nil {
+		if errors.Is(err, storage.ErrBucketNotExist) {
+			return nil, status.Error(codes.NotFound, "nothing to clear")
+		}
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &pbratelimter.Empty{}, nil
 }
 
 func LoggingInterceptor(logger *slog.Logger) grpc.UnaryServerInterceptor {

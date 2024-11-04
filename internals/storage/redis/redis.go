@@ -119,3 +119,16 @@ func (s *Storage) UpdateBucket(
 	}
 	return fmt.Errorf("reached maximum retries")
 }
+
+func (s *Storage) ClearBucket(ctx context.Context, bucketType storage.BucketType, value string) error {
+	key := fmt.Sprintf("%s:%s", bucketType, value)
+	result, err := s.client.Del(ctx, key).Result()
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket: %w", err)
+	}
+	if result == 0 {
+		return storage.ErrBucketNotExist
+	}
+
+	return nil
+}

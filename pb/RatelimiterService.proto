@@ -6,6 +6,11 @@ package ratelimiter;
 
 service Ratelimiter {
     rpc Allow(AllowRequest) returns (AllowResponse);
+    rpc Clear(ClearRequest) returns (Empty);
+}
+
+message Empty {
+
 }
 
 message AllowRequest {
@@ -16,4 +21,9 @@ message AllowRequest {
 
 message AllowResponse {
     bool ok = 1;
+}
+
+message ClearRequest {
+    string login = 1;
+    string ip = 2;
 }
