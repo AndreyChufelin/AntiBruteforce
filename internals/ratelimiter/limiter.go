@@ -12,6 +12,7 @@ import (
 
 type Limiter struct {
 	storage Storage
+	iplist  IPList
 	logger  *slog.Logger
 	rates   Rates
 }
@@ -28,17 +29,38 @@ type Storage interface {
 	ClearBucket(ctx context.Context, bucketType storage.BucketType, key string) error
 }
 
-func NewRateLimiter(logger *slog.Logger, storage Storage, rates Rates) *Limiter {
+//go:generate mockery --name IPList
+type IPList interface {
+	WhitelistCheckIP(ctx context.Context, ip string) (bool, error)
+	BlacklistCheckIP(ctx context.Context, ip string) (bool, error)
+}
+
+func NewRateLimiter(logger *slog.Logger, storage Storage, rates Rates, iplist IPList) *Limiter {
 	return &Limiter{
 		storage: storage,
 		logger:  logger,
 		rates:   rates,
+		iplist:  iplist,
 	}
 }
 
-func (r *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (bool, error) {
-	logg := r.logger.With("op", "ReqAllowed")
-	err := r.storage.UpdateBucket(ctx, storage.LoginBucket, login, r.rates.Login, time.Minute)
+func (l *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (bool, error) {
+	logg := l.logger.With("op", "ReqAllowed")
+	ipstatus, err := l.isIPAllowed(ctx, ip)
+	if err != nil {
+		logg.Error("failed to check ip", "ip", ip, "err", err)
+		return false, fmt.Errorf("failed to check ip %s: %w", ip, err)
+	}
+	if ipstatus == ipAllowed {
+		logg.Info("request allowed from whitelist", "ip", ip)
+		return true, nil
+	}
+	if ipstatus == ipRejected {
+		logg.Info("request blocked from blacklist", "ip", ip)
+		return false, nil
+	}
+
+	err = l.storage.UpdateBucket(ctx, storage.LoginBucket, login, l.rates.Login, time.Minute)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by login", "login", login)
@@ -48,7 +70,7 @@ func (r *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 		return false, fmt.Errorf("failed to update login bucket %s: %w", login, err)
 	}
 
-	err = r.storage.UpdateBucket(ctx, storage.PasswordBucket, password, r.rates.Password, time.Minute)
+	err = l.storage.UpdateBucket(ctx, storage.PasswordBucket, password, l.rates.Password, time.Minute)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by password")
@@ -58,7 +80,7 @@ func (r *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 		return false, fmt.Errorf("failed to update password bucket: %w", err)
 	}
 
-	err = r.storage.UpdateBucket(ctx, storage.IPBucket, ip, r.rates.IP, time.Minute)
+	err = l.storage.UpdateBucket(ctx, storage.IPBucket, ip, l.rates.IP, time.Minute)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by ip", "ip", ip)
@@ -71,17 +93,44 @@ func (r *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 	return true, nil
 }
 
-func (r *Limiter) ClearReq(ctx context.Context, login, ip string) error {
-	logg := r.logger.With("op", "ClearReq")
+type ipstatus int
+
+const (
+	ipAllowed ipstatus = iota
+	ipRejected
+	ipNone
+)
+
+func (l *Limiter) isIPAllowed(ctx context.Context, ip string) (ipstatus, error) {
+	inWhitelist, err := l.iplist.WhitelistCheckIP(ctx, ip)
+	if err != nil {
+		return ipNone, fmt.Errorf("failed to check whitelist: %w", err)
+	}
+	if inWhitelist {
+		return ipAllowed, nil
+	}
+	inBlacklist, err := l.iplist.BlacklistCheckIP(ctx, ip)
+	if err != nil {
+		return ipNone, fmt.Errorf("failed to check blacklist: %w", err)
+	}
+	if inBlacklist {
+		return ipRejected, nil
+	}
+
+	return ipNone, nil
+}
+
+func (l *Limiter) ClearReq(ctx context.Context, login, ip string) error {
+	logg := l.logger.With("op", "ClearReq")
 	if login != "" {
-		err := r.storage.ClearBucket(ctx, storage.LoginBucket, login)
+		err := l.storage.ClearBucket(ctx, storage.LoginBucket, login)
 		if err != nil {
 			logg.Error("failed to clear bucket", "login", login, "err", err)
 			return fmt.Errorf("failed to clear bucket: %w", err)
 		}
 	}
 	if ip != "" {
-		err := r.storage.ClearBucket(ctx, storage.IPBucket, ip)
+		err := l.storage.ClearBucket(ctx, storage.IPBucket, ip)
 		if err != nil {
 			logg.Error("failed to clear bucket", "ip", ip, "err", err)
 			return fmt.Errorf("failed to clear bucket: %w", err)

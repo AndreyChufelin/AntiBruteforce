@@ -26,7 +26,7 @@ func NewRedis(host, port, password string, db int) *Storage {
 	}
 }
 
-func (s *Storage) Start(ctx context.Context) error {
+func (s *Storage) Connect(ctx context.Context) error {
 	s.client = redis.NewClient(&redis.Options{
 		Addr:     s.addr,
 		Password: s.password,
@@ -40,7 +40,7 @@ func (s *Storage) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) Stop(ctx context.Context) error {
+func (s *Storage) Close(ctx context.Context) error {
 	if s.client == nil {
 		return fmt.Errorf("no client initialized")
 	}

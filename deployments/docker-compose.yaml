@@ -4,12 +4,18 @@ services:
       context: ..
       dockerfile: ./build/Dockerfile
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - GRPC_PORT=50051
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DB: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      GRPC_PORT: 50051
     ports: 
       - "50051:50051"
   redis:
@@ -24,7 +30,36 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PORT: ${DB_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  migrations:
+    image: ghcr.io/kukymbr/goose-docker:3.22.1
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=host=db port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME}
+      - GOOSE_VERBOSE=false
+    volumes:
+      - ../migrations:/migrations
+
 
 volumes:
+  pg_data:
   redis_data:
 
