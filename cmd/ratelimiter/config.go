@@ -11,6 +11,7 @@ type Config struct {
 	Redis RedisConf
 	GRPC  GRPCConf
 	Rates RatesConf
+	DB    DBConf
 }
 
 type RedisConf struct {
@@ -28,6 +29,14 @@ type RatesConf struct {
 	Login    int
 	Password int
 	IP       int
+}
+
+type DBConf struct {
+	User     string
+	Password string
+	Name     string
+	Host     string
+	Port     string
 }
 
 func LoadConfig(path string) (Config, error) {

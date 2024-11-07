@@ -11,3 +11,10 @@ port="50051"
 login=10
 password=100
 ip=1000
+
+[db]
+user="postgres"
+password="postgres"
+name="postgres"
+host="db"
+port="5432"
