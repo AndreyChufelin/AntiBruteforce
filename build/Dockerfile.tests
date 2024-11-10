@@ -1,0 +1,14 @@
+FROM golang:1.23.2 AS build
+
+ENV BIN_FILE=/opt/antibruteforce/ratelimiter
+ENV CODE_DIR=/go/src/
+
+WORKDIR ${CODE_DIR}
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . ${CODE_DIR}
+
+CMD ["go", "test", "-v", "-count=1", "-timeout", "2m", "--tags=integration", "/go/src/tests/..."]

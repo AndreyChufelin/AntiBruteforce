@@ -13,7 +13,7 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_DB: ${DB_NAME}
+      DB_NAME: ${DB_NAME}
       DB_PORT: ${DB_PORT}
       GRPC_PORT: 50051
     ports: 
@@ -57,9 +57,32 @@ services:
       - GOOSE_VERBOSE=false
     volumes:
       - ../migrations:/migrations
-
+  tests:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile.tests
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASES: ${REDIS_DB}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      GRPC_PORT: 50051
+    profiles:
+      - tests
 
 volumes:
-  pg_data:
-  redis_data:
-
+    pg_data:
+      name: ${POSTGRES_VOLUME:-postgres_data_default}
+    redis_data:
+      name: ${REDIS_VOLUME:-redis_data_default}
