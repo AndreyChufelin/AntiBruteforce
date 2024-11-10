@@ -14,13 +14,14 @@ type Limiter struct {
 	storage Storage
 	iplist  IPList
 	logger  *slog.Logger
-	rates   Rates
+	options Options
 }
 
-type Rates struct {
+type Options struct {
 	Login    int
 	Password int
 	IP       int
+	Interval time.Duration
 }
 
 //go:generate mockery --name Storage
@@ -35,11 +36,11 @@ type IPList interface {
 	BlacklistCheckIP(ctx context.Context, ip string) (bool, error)
 }
 
-func NewRateLimiter(logger *slog.Logger, storage Storage, rates Rates, iplist IPList) *Limiter {
+func NewRateLimiter(logger *slog.Logger, storage Storage, options Options, iplist IPList) *Limiter {
 	return &Limiter{
 		storage: storage,
 		logger:  logger,
-		rates:   rates,
+		options: options,
 		iplist:  iplist,
 	}
 }
@@ -60,7 +61,7 @@ func (l *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 		return false, nil
 	}
 
-	err = l.storage.UpdateBucket(ctx, storage.LoginBucket, login, l.rates.Login, time.Minute)
+	err = l.storage.UpdateBucket(ctx, storage.LoginBucket, login, l.options.Login, l.options.Interval)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by login", "login", login)
@@ -70,7 +71,7 @@ func (l *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 		return false, fmt.Errorf("failed to update login bucket %s: %w", login, err)
 	}
 
-	err = l.storage.UpdateBucket(ctx, storage.PasswordBucket, password, l.rates.Password, time.Minute)
+	err = l.storage.UpdateBucket(ctx, storage.PasswordBucket, password, l.options.Password, l.options.Interval)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by password")
@@ -80,7 +81,7 @@ func (l *Limiter) ReqAllowed(ctx context.Context, login, password, ip string) (b
 		return false, fmt.Errorf("failed to update password bucket: %w", err)
 	}
 
-	err = l.storage.UpdateBucket(ctx, storage.IPBucket, ip, l.rates.IP, time.Minute)
+	err = l.storage.UpdateBucket(ctx, storage.IPBucket, ip, l.options.IP, l.options.Interval)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketFull) {
 			logg.Warn("request rejected by ip", "ip", ip)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"log/slog"
 	"os"
@@ -17,8 +18,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile, "config", "/etc/antibruteforce/config.toml", "Path to configuration file")
+}
+
 func main() {
-	config, err := LoadConfig("/etc/antibruteforce/config.toml")
+	flag.Parse()
+
+	config, err := LoadConfig(configFile)
 	if err != nil {
 		log.Fatal("failed loading config: %w", err)
 	}
@@ -42,10 +51,11 @@ func main() {
 
 	iplist := iplist.NewIPList(logger, postgres)
 
-	limiter := ratelimiter.NewRateLimiter(logger, redis, ratelimiter.Rates{
-		Login:    config.Rates.Login,
-		Password: config.Rates.Password,
-		IP:       config.Rates.IP,
+	limiter := ratelimiter.NewRateLimiter(logger, redis, ratelimiter.Options{
+		Login:    config.Limiter.Login,
+		Password: config.Limiter.Password,
+		IP:       config.Limiter.IP,
+		Interval: time.Duration(config.Limiter.Interval) * time.Second,
 	}, iplist)
 
 	server := grpcserver.NewGRPC(logger, limiter, iplist, config.GRPC.Port)

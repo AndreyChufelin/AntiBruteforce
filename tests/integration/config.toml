@@ -9,9 +9,9 @@ port="50051"
 
 [limiter]
 login=10
-password=100
-ip=1000
-interval=60
+password=10
+ip=10
+interval=1
 
 [db]
 user="postgres"
