@@ -24,4 +24,4 @@ COPY --from=build ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/antibruteforce/config.toml
 COPY ./configs/config.toml ${CONFIG_FILE}
 
-CMD ["sh", "-c", "${BIN_FILE}"]
+CMD ["sh", "-c", "${BIN_FILE} -config ${CONFIG_FILE}"]
