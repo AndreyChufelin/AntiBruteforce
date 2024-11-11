@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ func TestUpdateBucket(t *testing.T) {
 		DB:       0,
 	})
 
-	key := "login:user"
+	key := "user"
 	limit := 10
 	period := time.Minute
 	for i := range limit {
@@ -39,7 +40,7 @@ func TestUpdateBucketTooManyCalls(t *testing.T) {
 		DB:       0,
 	})
 
-	key := "login:user"
+	key := "user"
 	limit := 10
 	period := time.Second
 	for i := range limit {
@@ -49,8 +50,12 @@ func TestUpdateBucketTooManyCalls(t *testing.T) {
 	err := rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
 	require.ErrorIs(t, err, storage.ErrBucketFull)
 
-	time.Sleep(period / time.Duration(limit))
+	// Reset bucket by setting `tat` to now
+	setKey := fmt.Sprintf("%s:%s", storage.LoginBucket, key)
+	now := strconv.FormatInt(time.Now().UnixNano(), 10)
+	s.Set(setKey, now)
 
+	// Verify the bucket accepts a new request
 	err = rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
 	require.NoError(t, err)
 }
