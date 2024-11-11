@@ -34,9 +34,19 @@ jobs:
       - name: Run tests
         run: go test -race -count 100 ./...
 
-  build:
+  integration:
     runs-on: ubuntu-latest
     needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run tests with Docker Compose
+        run: docker compose --env-file ./deployments/.env.tests -f ./deployments/docker-compose.yaml run --build --rm tests
+
+  build:
+    runs-on: ubuntu-latest
+    needs: integration
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
