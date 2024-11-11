@@ -53,7 +53,7 @@ services:
         condition: service_healthy
     environment:
       - GOOSE_DRIVER=postgres
-      - GOOSE_DBSTRING=host=db port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME}
+      - GOOSE_DBSTRING=host=db port=${DB_PORT:-5432} user=${DB_USER:-postgres} password=${DB_PASSWORD:-postgres} dbname=${DB_NAME:-postgres}
       - GOOSE_VERBOSE=false
     volumes:
       - ../migrations:/migrations
