@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -11,12 +8,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// blacklistAddCmd represents the blacklistAdd command
 var blacklistAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "adds ip to blacklist",
 	Long:  `adds ip to blacklist`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		_, err := iplist.BlacklistAdd(context.TODO(), &pbiplist.ListRequest{Ip: subnet})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {

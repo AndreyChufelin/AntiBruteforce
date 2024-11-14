@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -11,12 +8,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// blacklistDeleteCmd represents the blacklistDelete command
 var blacklistDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "deletes ip from blacklist",
 	Long:  `deletes ip from blacklist`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		_, err := iplist.BlacklistDelete(context.TODO(), &pbiplist.ListRequest{Ip: subnet})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {

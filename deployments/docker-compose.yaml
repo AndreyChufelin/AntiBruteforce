@@ -80,6 +80,16 @@ services:
       GRPC_PORT: 50051
     profiles:
       - tests
+  cli:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile.cli
+    command: ["sh", "-c", "antibruteforce-cli && exec /bin/sh"]
+    environment:
+      HOST: ratelimiter
+      PORT: 50051
+    profiles:
+      - cli
 
 volumes:
     pg_data:

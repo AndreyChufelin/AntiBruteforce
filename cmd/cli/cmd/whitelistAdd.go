@@ -8,12 +8,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// whitelistAddCmd represents the whitelistAdd command
 var whitelistAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "adds ip to whitelist",
 	Long:  `adds ip to whitelist`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		_, err := iplist.WhitelistAdd(context.TODO(), &pbiplist.ListRequest{Ip: subnet})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {

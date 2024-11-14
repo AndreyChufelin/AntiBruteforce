@@ -1,4 +1,4 @@
-.PHONY: run generate build test integration-tests
+.PHONY: run generate build test integration-tests cli
 COMPOSE_FILE=deployments/docker-compose.yaml
 
 run:
@@ -19,3 +19,5 @@ test:
 integration-tests:
 	docker-compose --env-file ./deployments/.env.tests -f ${COMPOSE_FILE} run --build --rm tests
 
+cli:
+	docker-compose -f deployments/docker-compose.yaml run cli

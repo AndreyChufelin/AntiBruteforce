@@ -13,12 +13,11 @@ var (
 	ip    string
 )
 
-// resetCmd represents the reset command
 var resetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "resets bucket",
 	Long:  `resets bucket`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		_, err := limiter.Clear(context.TODO(), &pbratelimter.ClearRequest{Login: login, Ip: ip})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
