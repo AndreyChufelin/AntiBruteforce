@@ -29,13 +29,16 @@ func (s *Server) Allow(ctx context.Context, request *pbratelimter.AllowRequest) 
 
 func (s *Server) Clear(ctx context.Context, request *pbratelimter.ClearRequest) (*pbratelimter.Empty, error) {
 	logg := s.logger.With("handler", "Clear")
-	err := validateIP(request.Ip)
-	if err != nil {
-		logg.Warn("invalid argument", "ip", request.Ip)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+
+	if request.Ip != "" {
+		err := validateIP(request.Ip)
+		if err != nil {
+			logg.Warn("invalid argument", "ip", request.Ip)
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
 	}
 
-	err = s.limiter.ClearReq(ctx, request.Login, request.Ip)
+	err := s.limiter.ClearReq(ctx, request.Login, request.Ip)
 	if err != nil {
 		if errors.Is(err, storage.ErrBucketNotExist) {
 			logg.Error("failed to clear request", "login", request.Login, "ip", request.Ip, "err", err)

@@ -126,15 +126,15 @@ func (l *Limiter) ClearReq(ctx context.Context, login, ip string) error {
 	if login != "" {
 		err := l.storage.ClearBucket(ctx, storage.LoginBucket, login)
 		if err != nil {
-			logg.Error("failed to clear bucket", "login", login, "err", err)
-			return fmt.Errorf("failed to clear bucket: %w", err)
+			logg.Error("failed to clear login bucket", "login", login, "err", err)
+			return fmt.Errorf("failed to clear login bucket: %w", err)
 		}
 	}
 	if ip != "" {
 		err := l.storage.ClearBucket(ctx, storage.IPBucket, ip)
 		if err != nil {
-			logg.Error("failed to clear bucket", "ip", ip, "err", err)
-			return fmt.Errorf("failed to clear bucket: %w", err)
+			logg.Error("failed to clear ip bucket", "ip", ip, "err", err)
+			return fmt.Errorf("failed to clear ip bucket: %w", err)
 		}
 	}
 
