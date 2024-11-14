@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strings"
 	"time"
 
 	pbiplist "github.com/AndreyChufelin/AntiBruteforce/pb/iplist"
@@ -124,7 +125,8 @@ func LoggingInterceptor(logger *slog.Logger) grpc.UnaryServerInterceptor {
 }
 
 func validateIP(ip string) error {
-	parsedIP := net.ParseIP(ip)
+	i := strings.Split(ip, "/")
+	parsedIP := net.ParseIP(i[0])
 	if parsedIP == nil {
 		return fmt.Errorf("wrong ip")
 	}
