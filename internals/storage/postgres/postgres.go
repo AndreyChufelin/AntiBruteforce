@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -79,9 +80,18 @@ func (s *Storage) WhitelistAdd(ctx context.Context, subnet string) error {
 }
 
 func (s *Storage) WhitelistDelete(ctx context.Context, subnet string) error {
-	_, err := s.db.ExecContext(ctx, "DELETE FROM whitelist WHERE subnet=$1", subnet)
+	result, err := s.db.ExecContext(ctx, "DELETE FROM whitelist WHERE subnet=$1", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute delete whitelist query: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return storage.ErrSubnetNotExist
 	}
 
 	return nil
@@ -97,9 +107,18 @@ func (s *Storage) BlacklistAdd(ctx context.Context, subnet string) error {
 }
 
 func (s *Storage) BlacklistDelete(ctx context.Context, subnet string) error {
-	_, err := s.db.ExecContext(ctx, "DELETE FROM blacklist WHERE subnet=$1", subnet)
+	result, err := s.db.ExecContext(ctx, "DELETE FROM blacklist WHERE subnet=$1", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute delete blacklist query: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return storage.ErrSubnetNotExist
 	}
 
 	return nil

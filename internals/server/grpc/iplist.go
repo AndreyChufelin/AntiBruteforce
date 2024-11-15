@@ -2,7 +2,9 @@ package grpcserver
 
 import (
 	"context"
+	"errors"
 
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	pbiplist "github.com/AndreyChufelin/AntiBruteforce/pb/iplist"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,12 +30,17 @@ func (s *Server) WhitelistDelete(ctx context.Context, request *pbiplist.ListRequ
 	logg := s.logger.With("handler", "WhitelistDelete")
 	err := validateSubnet(request.Subnet)
 	if err != nil {
+
 		logg.Warn("invalid argument", "subnet", request.Subnet)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	err = s.iplist.WhitelistDelete(ctx, request.Subnet)
 	if err != nil {
+		if errors.Is(err, storage.ErrSubnetNotExist) {
+			logg.Warn("subnet doesn't exist")
+			return nil, status.Error(codes.NotFound, "subnet doesn't exist")
+		}
 		logg.Error("failed to delete from whitelist", "err", err)
 		return nil, status.Error(codes.Internal, "intenal server error")
 	}
@@ -66,6 +73,10 @@ func (s *Server) BlacklistDelete(ctx context.Context, request *pbiplist.ListRequ
 
 	err = s.iplist.BlacklistDelete(ctx, request.Subnet)
 	if err != nil {
+		if errors.Is(err, storage.ErrSubnetNotExist) {
+			logg.Warn("subnet doesn't exist")
+			return nil, status.Error(codes.NotFound, "subnet doesn't exist")
+		}
 		logg.Error("failed to delete from blacklist", "err", err)
 		return nil, status.Error(codes.Internal, "intenal server error")
 	}
