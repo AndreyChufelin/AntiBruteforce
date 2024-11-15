@@ -28,8 +28,8 @@ func TestReqAllowed(t *testing.T) {
 	mockStorage.On("UpdateBucket", mock.Anything, storage.IPBucket, "127.0.0.1", 1000, time.Minute).Return(nil)
 
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
-	mockIPList.On("BlacklistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("BlacklistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
@@ -42,7 +42,7 @@ func TestReqAllowedInWhitelist(t *testing.T) {
 	mockStorage := mocks.NewStorage(t)
 
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(true, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(true, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
@@ -55,8 +55,8 @@ func TestReqAllowedInBlacklist(t *testing.T) {
 	mockStorage := mocks.NewStorage(t)
 
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
-	mockIPList.On("BlacklistCheckIP", mock.Anything, "127.0.0.1").Return(true, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("BlacklistCheckSubnet", mock.Anything, "127.0.0.1").Return(true, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
@@ -70,8 +70,8 @@ func TestReqAllowedLoginTooMany(t *testing.T) {
 	mockStorage.On("UpdateBucket", mock.Anything, storage.LoginBucket, "user", 10, time.Minute).
 		Return(storage.ErrBucketFull)
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
-	mockIPList.On("BlacklistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("BlacklistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
@@ -86,8 +86,8 @@ func TestReqAllowedPasswordTooMany(t *testing.T) {
 	mockStorage.On("UpdateBucket", mock.Anything, storage.PasswordBucket, "password", 100, time.Minute).
 		Return(storage.ErrBucketFull)
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
-	mockIPList.On("BlacklistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("BlacklistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
@@ -103,8 +103,8 @@ func TestReqAllowedIPTooMany(t *testing.T) {
 	mockStorage.On("UpdateBucket", mock.Anything, storage.IPBucket, "127.0.0.1", 1000, time.Minute).
 		Return(storage.ErrBucketFull)
 	mockIPList := mocks.NewIPList(t)
-	mockIPList.On("WhitelistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
-	mockIPList.On("BlacklistCheckIP", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("WhitelistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
+	mockIPList.On("BlacklistCheckSubnet", mock.Anything, "127.0.0.1").Return(false, nil)
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 

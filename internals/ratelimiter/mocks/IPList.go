@@ -13,12 +13,12 @@ type IPList struct {
 	mock.Mock
 }
 
-// BlacklistCheckIP provides a mock function with given fields: ctx, ip
-func (_m *IPList) BlacklistCheckIP(ctx context.Context, ip string) (bool, error) {
+// BlacklistCheckSubnet provides a mock function with given fields: ctx, ip
+func (_m *IPList) BlacklistCheckSubnet(ctx context.Context, ip string) (bool, error) {
 	ret := _m.Called(ctx, ip)
 
 	if len(ret) == 0 {
-		panic("no return value specified for BlacklistCheckIP")
+		panic("no return value specified for BlacklistCheckSubnet")
 	}
 
 	var r0 bool
@@ -41,12 +41,12 @@ func (_m *IPList) BlacklistCheckIP(ctx context.Context, ip string) (bool, error)
 	return r0, r1
 }
 
-// WhitelistCheckIP provides a mock function with given fields: ctx, ip
-func (_m *IPList) WhitelistCheckIP(ctx context.Context, ip string) (bool, error) {
+// WhitelistCheckSubnet provides a mock function with given fields: ctx, ip
+func (_m *IPList) WhitelistCheckSubnet(ctx context.Context, ip string) (bool, error) {
 	ret := _m.Called(ctx, ip)
 
 	if len(ret) == 0 {
-		panic("no return value specified for WhitelistCheckIP")
+		panic("no return value specified for WhitelistCheckSubnet")
 	}
 
 	var r0 bool

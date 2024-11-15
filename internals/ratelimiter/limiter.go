@@ -32,8 +32,8 @@ type Storage interface {
 
 //go:generate mockery --name IPList
 type IPList interface {
-	WhitelistCheckIP(ctx context.Context, ip string) (bool, error)
-	BlacklistCheckIP(ctx context.Context, ip string) (bool, error)
+	WhitelistCheckSubnet(ctx context.Context, ip string) (bool, error)
+	BlacklistCheckSubnet(ctx context.Context, ip string) (bool, error)
 }
 
 func NewRateLimiter(logger *slog.Logger, storage Storage, options Options, iplist IPList) *Limiter {
@@ -103,14 +103,14 @@ const (
 )
 
 func (l *Limiter) isIPAllowed(ctx context.Context, ip string) (ipstatus, error) {
-	inWhitelist, err := l.iplist.WhitelistCheckIP(ctx, ip)
+	inWhitelist, err := l.iplist.WhitelistCheckSubnet(ctx, ip)
 	if err != nil {
 		return ipNone, fmt.Errorf("failed to check whitelist: %w", err)
 	}
 	if inWhitelist {
 		return ipAllowed, nil
 	}
-	inBlacklist, err := l.iplist.BlacklistCheckIP(ctx, ip)
+	inBlacklist, err := l.iplist.BlacklistCheckSubnet(ctx, ip)
 	if err != nil {
 		return ipNone, fmt.Errorf("failed to check blacklist: %w", err)
 	}

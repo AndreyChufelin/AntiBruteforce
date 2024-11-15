@@ -16,6 +16,6 @@ message Empty {
 }
 
 message ListRequest {
-    string ip = 1;
+    string subnet = 1;
 }
 
