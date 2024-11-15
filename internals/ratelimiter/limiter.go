@@ -121,21 +121,13 @@ func (l *Limiter) isIPAllowed(ctx context.Context, ip string) (ipstatus, error) 
 	return ipNone, nil
 }
 
-func (l *Limiter) ClearReq(ctx context.Context, login, ip string) error {
+func (l *Limiter) ClearReq(ctx context.Context, bucketType storage.BucketType, key string) error {
 	logg := l.logger.With("op", "ClearReq")
-	if login != "" {
-		err := l.storage.ClearBucket(ctx, storage.LoginBucket, login)
-		if err != nil {
-			logg.Error("failed to clear login bucket", "login", login, "err", err)
-			return fmt.Errorf("failed to clear login bucket: %w", err)
-		}
-	}
-	if ip != "" {
-		err := l.storage.ClearBucket(ctx, storage.IPBucket, ip)
-		if err != nil {
-			logg.Error("failed to clear ip bucket", "ip", ip, "err", err)
-			return fmt.Errorf("failed to clear ip bucket: %w", err)
-		}
+
+	err := l.storage.ClearBucket(ctx, bucketType, key)
+	if err != nil {
+		logg.Error("failed to clear bucket", "type", bucketType, "key", key, "err", err)
+		return fmt.Errorf("failed to clear bucket: %w", err)
 	}
 
 	return nil

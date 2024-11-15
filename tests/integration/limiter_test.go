@@ -15,6 +15,7 @@ import (
 	"github.com/AndreyChufelin/AntiBruteforce/internals/iplist"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/ratelimiter"
 	grpcserver "github.com/AndreyChufelin/AntiBruteforce/internals/server/grpc"
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/storage/postgres"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/storage/redis"
 	pbratelimter "github.com/AndreyChufelin/AntiBruteforce/pb/ratelimiter"
@@ -22,6 +23,8 @@ import (
 	_ "github.com/lib/pq"
 	redisdb "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type IntegrationSuite struct {
@@ -186,4 +189,38 @@ func (s *IntegrationSuite) TestAllowBlacklist() {
 
 func TestIntegrationSuite(t *testing.T) {
 	suite.Run(t, &testSuite)
+}
+
+func (s *IntegrationSuite) TestClear() {
+	loginKey := fmt.Sprintf("%s:%s", storage.LoginBucket, "user")
+	ipKey := fmt.Sprintf("%s:%s", storage.IPBucket, "127.0.0.1")
+
+	err := s.redis.Set(context.TODO(), loginKey, time.Now().UnixNano(), 0).Err()
+	s.Require().NoError(err)
+	err = s.redis.Set(context.TODO(), ipKey, time.Now().UnixNano(), 0).Err()
+	s.Require().NoError(err)
+
+	_, err = s.hanlders.Clear(context.TODO(), &pbratelimter.ClearRequest{Login: "user", Ip: "127.0.0.1"})
+	s.Require().NoError(err)
+
+	err = s.redis.Get(context.TODO(), loginKey).Err()
+	s.Require().ErrorIs(err, redisdb.Nil)
+
+	err = s.redis.Get(context.TODO(), ipKey).Err()
+	s.Require().ErrorIs(err, redisdb.Nil)
+}
+
+func (s *IntegrationSuite) TestClearLoginNotExist() {
+	_, err := s.hanlders.Clear(context.TODO(), &pbratelimter.ClearRequest{Login: "user", Ip: "127.0.0.1"})
+	s.Require().ErrorIs(err, status.Error(codes.NotFound, "no bucket with this login"))
+}
+
+func (s *IntegrationSuite) TestClearIPNotExist() {
+	loginKey := fmt.Sprintf("%s:%s", storage.LoginBucket, "user")
+
+	err := s.redis.Set(context.TODO(), loginKey, time.Now().UnixNano(), 0).Err()
+	s.Require().NoError(err)
+
+	_, err = s.hanlders.Clear(context.TODO(), &pbratelimter.ClearRequest{Login: "user", Ip: "127.0.0.1"})
+	s.Require().ErrorIs(err, status.Error(codes.NotFound, "no bucket with this ip"))
 }

@@ -38,13 +38,30 @@ func (s *Server) Clear(ctx context.Context, request *pbratelimter.ClearRequest) 
 		}
 	}
 
-	err := s.limiter.ClearReq(ctx, request.Login, request.Ip)
-	if err != nil {
-		if errors.Is(err, storage.ErrBucketNotExist) {
-			logg.Error("failed to clear request", "login", request.Login, "ip", request.Ip, "err", err)
-			return nil, status.Error(codes.NotFound, "nothing to clear")
+	if request.Login != "" {
+		err := s.limiter.ClearReq(ctx, storage.LoginBucket, request.Login)
+		if err != nil {
+			if errors.Is(err, storage.ErrBucketNotExist) {
+				logg.Warn("failed to clear bucket: login doesn't exist", "login", request.Login)
+				return nil, status.Error(codes.NotFound, "no bucket with this login")
+			}
+
+			logg.Error("failed to clear login request", "login", request.Login, "err", err)
+			return nil, status.Error(codes.Internal, "internal server error")
 		}
-		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	if request.Ip != "" {
+		err := s.limiter.ClearReq(ctx, storage.IPBucket, request.Ip)
+		if err != nil {
+			if errors.Is(err, storage.ErrBucketNotExist) {
+				logg.Warn("failed to clear bucket: ip doesn't exist", "ip", request.Ip)
+				return nil, status.Error(codes.NotFound, "no bucket with this ip")
+			}
+
+			logg.Error("failed to clear ip request", "ip", request.Ip, "err", err)
+			return nil, status.Error(codes.Internal, "internal server error")
+		}
 	}
 
 	return &pbratelimter.Empty{}, nil

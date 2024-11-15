@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	pbiplist "github.com/AndreyChufelin/AntiBruteforce/pb/iplist"
 	pbratelimter "github.com/AndreyChufelin/AntiBruteforce/pb/ratelimiter"
 	"google.golang.org/grpc"
@@ -35,7 +36,7 @@ type IPList interface {
 
 type Limiter interface {
 	ReqAllowed(ctx context.Context, login, password, ip string) (bool, error)
-	ClearReq(ctx context.Context, login, ip string) error
+	ClearReq(ctx context.Context, bucketType storage.BucketType, key string) error
 }
 
 func NewGRPC(logger *slog.Logger, limiter Limiter, iplist IPList, port string) *Server {

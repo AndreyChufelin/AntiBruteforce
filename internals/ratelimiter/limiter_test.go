@@ -3,6 +3,7 @@ package ratelimiter
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log/slog"
 	"testing"
 	"time"
@@ -110,4 +111,27 @@ func TestReqAllowedIPTooMany(t *testing.T) {
 	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
 	require.False(t, allowed)
 	require.NoError(t, err)
+}
+
+func TestClearReq(t *testing.T) {
+	mockStorage := mocks.NewStorage(t)
+	mockStorage.On("ClearBucket", mock.Anything, storage.LoginBucket, "user").Return(nil)
+	mockIPList := mocks.NewIPList(t)
+
+	limiter := SetupLimiter(t, mockStorage, mockIPList)
+
+	err := limiter.ClearReq(context.TODO(), storage.LoginBucket, "user")
+	require.NoError(t, err)
+}
+
+func TestClearReqError(t *testing.T) {
+	mockStorage := mocks.NewStorage(t)
+	mockErr := fmt.Errorf("not exist")
+	mockStorage.On("ClearBucket", mock.Anything, storage.LoginBucket, "user").Return(mockErr)
+	mockIPList := mocks.NewIPList(t)
+
+	limiter := SetupLimiter(t, mockStorage, mockIPList)
+
+	err := limiter.ClearReq(context.TODO(), storage.LoginBucket, "user")
+	require.ErrorIs(t, err, mockErr)
 }
