@@ -135,7 +135,7 @@ func validateIP(ip string) error {
 func validateSubnet(subnet string) error {
 	_, _, err := net.ParseCIDR(subnet)
 	if err != nil {
-		return fmt.Errorf("wong subnet")
+		return fmt.Errorf("wrong subnet")
 	}
 	return nil
 }

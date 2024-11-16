@@ -30,7 +30,6 @@ func (s *Server) WhitelistDelete(ctx context.Context, request *pbiplist.ListRequ
 	logg := s.logger.With("handler", "WhitelistDelete")
 	err := validateSubnet(request.Subnet)
 	if err != nil {
-
 		logg.Warn("invalid argument", "subnet", request.Subnet)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

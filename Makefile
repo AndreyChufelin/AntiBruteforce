@@ -17,7 +17,7 @@ test:
 	go test -race -count 100 -v ./...
 
 integration-tests:
-	docker-compose --env-file ./deployments/.env.tests -f ${COMPOSE_FILE} run --build --rm tests
+	./tests/integration/start.sh
 
 cli:
 	docker-compose -f deployments/docker-compose.yaml run cli
