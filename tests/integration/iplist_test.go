@@ -3,8 +3,6 @@
 package integration
 
 import (
-	"context"
-
 	"github.com/AndreyChufelin/AntiBruteforce/pb/iplist"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc/codes"
@@ -13,7 +11,7 @@ import (
 
 func (s *IntegrationSuite) TestWhitelistAdd() {
 	subnet := "192.168.1.0/24"
-	_, err := s.handlers.WhitelistAdd(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.WhitelistAdd(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().NoError(err)
 
 	var exists bool
@@ -24,7 +22,7 @@ func (s *IntegrationSuite) TestWhitelistAdd() {
 
 func (s *IntegrationSuite) TestWhitelistAddInvalidSubnet() {
 	subnet := "192.168.1"
-	_, err := s.handlers.WhitelistAdd(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.WhitelistAdd(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "wrong subnet"))
 }
 
@@ -33,7 +31,7 @@ func (s *IntegrationSuite) TestWhitelistDelete() {
 	_, err := s.db.Exec("INSERT INTO whitelist (subnet) VALUES ($1)", subnet)
 	s.Require().NoError(err)
 
-	_, err = s.handlers.WhitelistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err = s.handlers.WhitelistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().NoError(err)
 
 	var exists bool
@@ -44,19 +42,19 @@ func (s *IntegrationSuite) TestWhitelistDelete() {
 
 func (s *IntegrationSuite) TestWhitelistDeleteNotExist() {
 	subnet := "192.168.1.0/24"
-	_, err := s.handlers.WhitelistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.WhitelistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.NotFound, "subnet doesn't exist"))
 }
 
 func (s *IntegrationSuite) TestWhitelistDeleteInvalidSubnet() {
 	subnet := "192.168.1"
-	_, err := s.handlers.WhitelistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.WhitelistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "wrong subnet"))
 }
 
 func (s *IntegrationSuite) TestBlacklistAdd() {
 	subnet := "192.168.1.0/24"
-	_, err := s.handlers.BlacklistAdd(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.BlacklistAdd(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().NoError(err)
 
 	var exists bool
@@ -67,13 +65,13 @@ func (s *IntegrationSuite) TestBlacklistAdd() {
 
 func (s *IntegrationSuite) TestBlacklistDeleteNotExist() {
 	subnet := "192.168.1.0/24"
-	_, err := s.handlers.BlacklistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.BlacklistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.NotFound, "subnet doesn't exist"))
 }
 
 func (s *IntegrationSuite) TestBlacklistAddInvalidSubnet() {
 	subnet := "192.168.1"
-	_, err := s.handlers.BlacklistAdd(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.BlacklistAdd(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "wrong subnet"))
 }
 
@@ -82,7 +80,7 @@ func (s *IntegrationSuite) TestBlacklistDelete() {
 	_, err := s.db.Exec("INSERT INTO blacklist (subnet) VALUES ($1)", subnet)
 	s.Require().NoError(err)
 
-	_, err = s.handlers.BlacklistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err = s.handlers.BlacklistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().NoError(err)
 
 	var exists bool
@@ -93,6 +91,6 @@ func (s *IntegrationSuite) TestBlacklistDelete() {
 
 func (s *IntegrationSuite) TestBlacklistDeleteInvalidSubnet() {
 	subnet := "192.168.1"
-	_, err := s.handlers.BlacklistDelete(context.TODO(), &iplist.ListRequest{Subnet: subnet})
+	_, err := s.handlers.BlacklistDelete(testSuite.ctx, &iplist.ListRequest{Subnet: subnet})
 	s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "wrong subnet"))
 }
