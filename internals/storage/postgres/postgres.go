@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -69,8 +70,8 @@ func (s *Storage) Close(ctx context.Context) error {
 	}
 }
 
-func (s *Storage) WhitelistAdd(ctx context.Context, ip string) error {
-	_, err := s.db.ExecContext(ctx, "INSERT INTO whitelist (subnet) VALUES ($1)", ip)
+func (s *Storage) WhitelistAdd(ctx context.Context, subnet string) error {
+	_, err := s.db.ExecContext(ctx, "INSERT INTO whitelist (subnet) VALUES ($1)", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute insert whitelist query: %w", err)
 	}
@@ -78,17 +79,26 @@ func (s *Storage) WhitelistAdd(ctx context.Context, ip string) error {
 	return nil
 }
 
-func (s *Storage) WhitelistDelete(ctx context.Context, ip string) error {
-	_, err := s.db.ExecContext(ctx, "DELETE FROM whitelist WHERE subnet=$1", ip)
+func (s *Storage) WhitelistDelete(ctx context.Context, subnet string) error {
+	result, err := s.db.ExecContext(ctx, "DELETE FROM whitelist WHERE subnet=$1", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute delete whitelist query: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return storage.ErrSubnetNotExist
 	}
 
 	return nil
 }
 
-func (s *Storage) BlacklistAdd(ctx context.Context, ip string) error {
-	_, err := s.db.ExecContext(ctx, "INSERT INTO blacklist (subnet) VALUES ($1)", ip)
+func (s *Storage) BlacklistAdd(ctx context.Context, subnet string) error {
+	_, err := s.db.ExecContext(ctx, "INSERT INTO blacklist (subnet) VALUES ($1)", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute insert blacklist query: %w", err)
 	}
@@ -96,16 +106,25 @@ func (s *Storage) BlacklistAdd(ctx context.Context, ip string) error {
 	return nil
 }
 
-func (s *Storage) BlacklistDelete(ctx context.Context, ip string) error {
-	_, err := s.db.ExecContext(ctx, "DELETE FROM blacklist WHERE subnet=$1", ip)
+func (s *Storage) BlacklistDelete(ctx context.Context, subnet string) error {
+	result, err := s.db.ExecContext(ctx, "DELETE FROM blacklist WHERE subnet=$1", subnet)
 	if err != nil {
 		return fmt.Errorf("failed execute delete blacklist query: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return storage.ErrSubnetNotExist
 	}
 
 	return nil
 }
 
-func (s *Storage) WhitelistCheckIP(ctx context.Context, ip string) (bool, error) {
+func (s *Storage) WhitelistCheckSubnet(ctx context.Context, ip string) (bool, error) {
 	var exists bool
 	err := s.db.GetContext(ctx, &exists, "SELECT EXISTS (SELECT 1 FROM whitelist WHERE subnet >> $1::inet)", ip)
 	if err != nil {
@@ -115,7 +134,7 @@ func (s *Storage) WhitelistCheckIP(ctx context.Context, ip string) (bool, error)
 	return exists, err
 }
 
-func (s *Storage) BlacklistCheckIP(ctx context.Context, ip string) (bool, error) {
+func (s *Storage) BlacklistCheckSubnet(ctx context.Context, ip string) (bool, error) {
 	var exists bool
 	err := s.db.GetContext(ctx, &exists, "SELECT EXISTS (SELECT 1 FROM blacklist WHERE subnet >> $1::inet)", ip)
 	if err != nil {

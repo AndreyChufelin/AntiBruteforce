@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/AndreyChufelin/AntiBruteforce/internals/storage"
@@ -126,10 +125,17 @@ func LoggingInterceptor(logger *slog.Logger) grpc.UnaryServerInterceptor {
 }
 
 func validateIP(ip string) error {
-	i := strings.Split(ip, "/")
-	parsedIP := net.ParseIP(i[0])
+	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		return fmt.Errorf("wrong ip")
+	}
+	return nil
+}
+
+func validateSubnet(subnet string) error {
+	_, _, err := net.ParseCIDR(subnet)
+	if err != nil {
+		return fmt.Errorf("wrong subnet")
 	}
 	return nil
 }
