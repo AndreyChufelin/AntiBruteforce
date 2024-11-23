@@ -1,4 +1,4 @@
-package integration
+package config
 
 import (
 	"fmt"
@@ -26,10 +26,10 @@ type GRPCConf struct {
 }
 
 type LimiterConf struct {
-	Login    int
-	Password int
-	IP       int
-	Interval int
+	LoginLimit    int `mapstructure:"login_limit"`
+	PasswordLimit int `mapstructure:"password_limit"`
+	IPLimit       int `mapstructure:"ip_limit"`
+	Interval      int
 }
 
 type DBConf struct {

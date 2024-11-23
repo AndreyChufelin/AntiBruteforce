@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	conf "github.com/AndreyChufelin/AntiBruteforce/internals/config"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/iplist"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/ratelimiter"
 	grpcserver "github.com/AndreyChufelin/AntiBruteforce/internals/server/grpc"
@@ -27,7 +28,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	config, err := LoadConfig(configFile)
+	config, err := conf.LoadConfig(configFile)
 	if err != nil {
 		log.Fatal("failed loading config: %w", err)
 	}
@@ -52,9 +53,9 @@ func main() {
 	iplist := iplist.NewIPList(logger, postgres)
 
 	limiter := ratelimiter.NewRateLimiter(logger, redis, ratelimiter.Options{
-		Login:    config.Limiter.Login,
-		Password: config.Limiter.Password,
-		IP:       config.Limiter.IP,
+		Login:    config.Limiter.LoginLimit,
+		Password: config.Limiter.PasswordLimit,
+		IP:       config.Limiter.IPLimit,
 		Interval: time.Duration(config.Limiter.Interval) * time.Second,
 	}, iplist)
 

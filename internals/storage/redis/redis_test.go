@@ -26,7 +26,7 @@ func TestUpdateBucket(t *testing.T) {
 	limit := 10
 	period := time.Minute
 	for i := range limit {
-		err := rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
+		err := rdb.UpdateBucket(context.Background(), storage.LoginBucket, key, limit, period)
 		require.NoError(t, err, fmt.Sprintf("call #%d", i+1))
 	}
 }
@@ -44,10 +44,10 @@ func TestUpdateBucketTooManyCalls(t *testing.T) {
 	limit := 10
 	period := time.Second
 	for i := range limit {
-		err := rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
+		err := rdb.UpdateBucket(context.Background(), storage.LoginBucket, key, limit, period)
 		require.NoError(t, err, fmt.Sprintf("call #%d", i+1))
 	}
-	err := rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
+	err := rdb.UpdateBucket(context.Background(), storage.LoginBucket, key, limit, period)
 	require.ErrorIs(t, err, storage.ErrBucketFull)
 
 	// Reset bucket by setting `tat` to now
@@ -56,6 +56,6 @@ func TestUpdateBucketTooManyCalls(t *testing.T) {
 	s.Set(setKey, now)
 
 	// Verify the bucket accepts a new request
-	err = rdb.UpdateBucket(context.TODO(), storage.LoginBucket, key, limit, period)
+	err = rdb.UpdateBucket(context.Background(), storage.LoginBucket, key, limit, period)
 	require.NoError(t, err)
 }

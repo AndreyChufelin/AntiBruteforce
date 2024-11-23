@@ -33,7 +33,7 @@ func TestReqAllowed(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.True(t, allowed)
 	require.NoError(t, err)
 }
@@ -46,7 +46,7 @@ func TestReqAllowedInWhitelist(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.True(t, allowed)
 	require.NoError(t, err)
 }
@@ -60,7 +60,7 @@ func TestReqAllowedInBlacklist(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.False(t, allowed)
 	require.NoError(t, err)
 }
@@ -75,7 +75,7 @@ func TestReqAllowedLoginTooMany(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.False(t, allowed)
 	require.NoError(t, err)
 }
@@ -91,7 +91,7 @@ func TestReqAllowedPasswordTooMany(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.False(t, allowed)
 	require.NoError(t, err)
 }
@@ -108,7 +108,7 @@ func TestReqAllowedIPTooMany(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	allowed, err := limiter.ReqAllowed(context.TODO(), "user", "password", "127.0.0.1")
+	allowed, err := limiter.ReqAllowed(context.Background(), "user", "password", "127.0.0.1")
 	require.False(t, allowed)
 	require.NoError(t, err)
 }
@@ -120,7 +120,7 @@ func TestClearReq(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	err := limiter.ClearReq(context.TODO(), storage.LoginBucket, "user")
+	err := limiter.ClearReq(context.Background(), storage.LoginBucket, "user")
 	require.NoError(t, err)
 }
 
@@ -132,6 +132,6 @@ func TestClearReqError(t *testing.T) {
 
 	limiter := SetupLimiter(t, mockStorage, mockIPList)
 
-	err := limiter.ClearReq(context.TODO(), storage.LoginBucket, "user")
+	err := limiter.ClearReq(context.Background(), storage.LoginBucket, "user")
 	require.ErrorIs(t, err, mockErr)
 }

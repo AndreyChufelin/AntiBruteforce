@@ -13,7 +13,7 @@ var blacklistAddCmd = &cobra.Command{
 	Short: "adds ip to blacklist",
 	Long:  `adds ip to blacklist`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		_, err := iplist.BlacklistAdd(context.TODO(), &pbiplist.ListRequest{Subnet: subnet})
+		_, err := iplist.BlacklistAdd(context.Background(), &pbiplist.ListRequest{Subnet: subnet})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
 				cmd.PrintErrln(e.Message())

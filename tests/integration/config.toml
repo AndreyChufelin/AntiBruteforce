@@ -8,9 +8,9 @@ db=0
 port="50051"
 
 [limiter]
-login=10
-password=10
-ip=10
+login_limit=10
+password_limit=10
+ip_limit=10
 interval=1
 
 [db]

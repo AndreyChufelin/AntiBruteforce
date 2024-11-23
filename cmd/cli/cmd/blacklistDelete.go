@@ -13,7 +13,7 @@ var blacklistDeleteCmd = &cobra.Command{
 	Short: "deletes ip from blacklist",
 	Long:  `deletes ip from blacklist`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		_, err := iplist.BlacklistDelete(context.TODO(), &pbiplist.ListRequest{Subnet: subnet})
+		_, err := iplist.BlacklistDelete(context.Background(), &pbiplist.ListRequest{Subnet: subnet})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
 				cmd.PrintErrln(e.Message())

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AndreyChufelin/AntiBruteforce/internals/config"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/iplist"
 	"github.com/AndreyChufelin/AntiBruteforce/internals/ratelimiter"
 	grpcserver "github.com/AndreyChufelin/AntiBruteforce/internals/server/grpc"
@@ -30,7 +31,7 @@ import (
 type IntegrationSuite struct {
 	suite.Suite
 	db              *sqlx.DB
-	config          Config
+	config          config.Config
 	handlers        *grpcserver.Server
 	redis           *redisdb.Client
 	limiterInterval time.Duration
@@ -48,10 +49,11 @@ func TestMain(m *testing.M) {
 	var err error
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	testSuite.config, err = LoadConfig("./config.toml")
+	testSuite.config, err = config.LoadConfig("./config.toml")
 	if err != nil {
 		log.Fatal("failed loading config", err)
 	}
+	fmt.Println("config", testSuite.config, testSuite.config.Limiter.IPLimit)
 
 	testSuite.db, err = sqlx.Connect("postgres",
 		fmt.Sprintf(
@@ -89,9 +91,9 @@ func TestMain(m *testing.M) {
 
 	testSuite.limiterInterval = time.Duration(testSuite.config.Limiter.Interval) * time.Second
 	limiter := ratelimiter.NewRateLimiter(logger, redis, ratelimiter.Options{
-		Login:    testSuite.config.Limiter.Login,
-		Password: testSuite.config.Limiter.Password,
-		IP:       testSuite.config.Limiter.IP,
+		Login:    testSuite.config.Limiter.LoginLimit,
+		Password: testSuite.config.Limiter.PasswordLimit,
+		IP:       testSuite.config.Limiter.IPLimit,
 		Interval: testSuite.limiterInterval,
 	}, iplist)
 
@@ -118,7 +120,7 @@ func (s *IntegrationSuite) TearDownTest() {
 }
 
 func (s *IntegrationSuite) TestAllowLogin() {
-	for i := range s.config.Limiter.Login {
+	for i := range s.config.Limiter.LoginLimit {
 		password := fmt.Sprintf("pass%d", i)
 		ip := fmt.Sprintf("127.0.0.%d", i)
 		res, err := s.handlers.Allow(testSuite.ctx, &pbratelimter.AllowRequest{Login: "user", Password: password, Ip: ip})
@@ -138,7 +140,7 @@ func (s *IntegrationSuite) TestAllowLogin() {
 }
 
 func (s *IntegrationSuite) TestAllowPassword() {
-	for i := range s.config.Limiter.Password {
+	for i := range s.config.Limiter.PasswordLimit {
 		login := fmt.Sprintf("user%d", i)
 		ip := fmt.Sprintf("127.0.0.%d", i)
 		res, err := s.handlers.Allow(testSuite.ctx, &pbratelimter.AllowRequest{Login: login, Password: "123456", Ip: ip})
@@ -158,7 +160,7 @@ func (s *IntegrationSuite) TestAllowPassword() {
 }
 
 func (s *IntegrationSuite) TestAllowIP() {
-	for i := range s.config.Limiter.Password {
+	for i := range s.config.Limiter.PasswordLimit {
 		login := fmt.Sprintf("user%d", i)
 		password := fmt.Sprintf("pass%d", i)
 		res, err := s.handlers.Allow(testSuite.ctx, &pbratelimter.AllowRequest{Login: login, Password: password, Ip: "127.0.0.1"})
@@ -179,7 +181,7 @@ func (s *IntegrationSuite) TestAllowIP() {
 
 func (s *IntegrationSuite) TestAllowWhitelist() {
 	s.db.Exec("INSERT INTO whitelist (subnet) VALUES ($1)", "127.0.0.0/8")
-	for range s.config.Limiter.Login + 1 {
+	for range s.config.Limiter.LoginLimit + 1 {
 		res, err := s.handlers.Allow(testSuite.ctx, &pbratelimter.AllowRequest{Login: "user", Password: "123456", Ip: "127.0.0.1"})
 		s.Require().NoError(err)
 		s.Require().True(res.Ok)

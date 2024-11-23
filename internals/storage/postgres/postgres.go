@@ -9,7 +9,11 @@ import (
 )
 
 type Storage struct {
-	db       *sqlx.DB
+	db   *sqlx.DB
+	conf dbConf
+}
+
+type dbConf struct {
 	user     string
 	password string
 	name     string
@@ -19,11 +23,13 @@ type Storage struct {
 
 func New(user, password, name, host, port string) *Storage {
 	return &Storage{
-		user:     user,
-		password: password,
-		name:     name,
-		host:     host,
-		port:     port,
+		conf: dbConf{
+			user:     user,
+			password: password,
+			name:     name,
+			host:     host,
+			port:     port,
+		},
 	}
 }
 
@@ -31,11 +37,11 @@ func (s *Storage) Connect(ctx context.Context) error {
 	db, err := sqlx.ConnectContext(ctx, "postgres",
 		fmt.Sprintf(
 			"user=%s dbname=%s sslmode=disable password=%s host=%s port=%s",
-			s.user,
-			s.name,
-			s.password,
-			s.host,
-			s.port,
+			s.conf.user,
+			s.conf.name,
+			s.conf.password,
+			s.conf.host,
+			s.conf.port,
 		),
 	)
 	if err != nil {
