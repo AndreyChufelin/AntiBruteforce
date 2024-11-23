@@ -106,16 +106,36 @@ func (s *Storage) UpdateBucket(
 		return err
 	}
 
-	maxRetries := 1000
+	err := retry(ctx, 10, 10*time.Millisecond, func() error {
+		return s.client.Watch(ctx, txf, key)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func retry(ctx context.Context, maxRetries int, baseDelay time.Duration, fn func() error) error {
 	for i := 0; i < maxRetries; i++ {
-		err := s.client.Watch(ctx, txf, key)
+		err := fn()
 		if err == nil {
 			return nil
 		}
-		if errors.Is(err, redis.TxFailedErr) {
-			continue
+		if !errors.Is(err, redis.TxFailedErr) {
+			return err
 		}
-		return err
+
+		delay := baseDelay * time.Duration(1<<i)
+		if delay > time.Second {
+			delay = time.Second
+		}
+		select {
+		case <-time.After(delay):
+			continue
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 	return fmt.Errorf("reached maximum retries")
 }
