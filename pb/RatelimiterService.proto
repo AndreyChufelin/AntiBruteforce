@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option go_package = "github.com/AndreyChufelin/AntiBruteforce/pb/ratelimiter";
+
+package ratelimiter;
+
+service Ratelimiter {
+    rpc Allow(AllowRequest) returns (AllowResponse);
+    rpc Clear(ClearRequest) returns (Empty);
+}
+
+message Empty {
+
+}
+
+message AllowRequest {
+    string login = 1;
+    string password = 2;
+    string ip = 3;
+}
+
+message AllowResponse {
+    bool ok = 1;
+}
+
+message ClearRequest {
+    string login = 1;
+    string ip = 2;
+}

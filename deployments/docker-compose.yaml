@@ -1,0 +1,98 @@
+services:
+  ratelimiter:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      GRPC_PORT: 50051
+    ports: 
+      - "50051:50051"
+  redis:
+    image: redis:7.4
+    volumes:
+      - redis_data:/data
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASES: ${REDIS_DB}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+      POSTGRES_PORT: ${DB_PORT:-5432}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  migrations:
+    image: ghcr.io/kukymbr/goose-docker:3.22.1
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=host=db port=${DB_PORT:-5432} user=${DB_USER:-postgres} password=${DB_PASSWORD:-postgres} dbname=${DB_NAME:-postgres}
+      - GOOSE_VERBOSE=false
+    volumes:
+      - ../migrations:/migrations
+  tests:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile.tests
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASES: ${REDIS_DB}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      GRPC_PORT: 50051
+    profiles:
+      - tests
+  cli:
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile.cli
+    command: ["sh", "-c", "antibruteforce-cli && exec /bin/sh"]
+    environment:
+      HOST: ratelimiter
+      PORT: 50051
+    profiles:
+      - cli
+
+volumes:
+    pg_data:
+      name: ${POSTGRES_VOLUME:-postgres_data_default}
+    redis_data:
+      name: ${REDIS_VOLUME:-redis_data_default}

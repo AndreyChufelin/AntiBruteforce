@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "github.com/AndreyChufelin/AntiBruteforce/pb/iplist";
+
+package iplist;
+
+service IPListService {
+    rpc WhitelistAdd(ListRequest) returns (Empty);
+    rpc WhitelistDelete(ListRequest) returns (Empty);
+    rpc BlacklistAdd(ListRequest) returns (Empty);
+    rpc BlacklistDelete(ListRequest) returns (Empty);
+}
+
+message Empty {
+
+}
+
+message ListRequest {
+    string subnet = 1;
+}
+
